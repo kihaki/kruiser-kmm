@@ -1,0 +1,7 @@
+package net.gaw.kruiser.sample
+
+interface Platform {
+    val name: String
+}
+
+expect fun getPlatform(): Platform
