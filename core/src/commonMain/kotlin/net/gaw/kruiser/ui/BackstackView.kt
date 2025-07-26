@@ -1,8 +1,6 @@
 package net.gaw.kruiser.ui
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.slideInHorizontally
@@ -21,6 +19,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import net.gaw.kruiser.core.BackStackEntry
+import net.gaw.kruiser.ui.BackstackEvent.GROW
+import net.gaw.kruiser.ui.BackstackEvent.IDLE
+import net.gaw.kruiser.ui.BackstackEvent.SHRINK
 
 /**
  * The latest change to the backstack which can be used to apply different animations.
@@ -36,20 +37,19 @@ data class BackstackTransitionState(
 
 /**
  * A composable that shows the topmost backstack item animated.
- * The destination content is wrapped in a SaveableStateHolder keyed by the backstack item’s key.
+ * The destination content is wrapped in a [SaveableStateHolder] keyed by the backstack item’s key.
  */
 @Composable
 fun BackstackView(
     entries: List<BackStackEntry>,
-    transitionSpec: AnimatedContentTransitionScope<BackStackEntry?>.(transitionState: BackstackTransitionState) -> ContentTransform = { transitionState ->
-        when (transitionState.event) {
-            BackstackEvent.GROW -> slideInHorizontally { it } togetherWith slideOutHorizontally { -it }
-            BackstackEvent.SHRINK -> slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
-            BackstackEvent.IDLE -> EnterTransition.None togetherWith ExitTransition.None
-        }.apply {
-            targetContentZIndex = transitionState.targetContentZIndex
-        }
-    },
+    onEnter: (transitionState: BackstackTransitionState) -> EnterTransition =
+        { slideInHorizontally { it } },
+    onExit: (transitionState: BackstackTransitionState) -> ExitTransition =
+        { slideOutHorizontally { -it } },
+    onPopEnter: (transitionState: BackstackTransitionState) -> EnterTransition =
+        { slideInHorizontally { -it } },
+    onPopExit: (transitionState: BackstackTransitionState) -> ExitTransition =
+        { slideOutHorizontally { it } },
     contentAlignment: Alignment = Alignment.Center,
     label: String = "BackstackView",
     modifier: Modifier = Modifier,
@@ -61,9 +61,9 @@ fun BackstackView(
     val sizeDiff = entries.size - previousBackstackSize
 
     val event = when {
-        sizeDiff > 0 -> BackstackEvent.GROW
-        sizeDiff < 0 -> BackstackEvent.SHRINK
-        else -> BackstackEvent.IDLE
+        sizeDiff > 0 -> GROW
+        sizeDiff < 0 -> SHRINK
+        else -> IDLE
     }
 
     val transitionState = BackstackTransitionState(
@@ -75,7 +75,15 @@ fun BackstackView(
 
     AnimatedContent(
         targetState = currentBackstackEntry,
-        transitionSpec = { transitionSpec(transitionState) },
+        transitionSpec = {
+            when (transitionState.event) {
+                IDLE,
+                GROW -> onEnter(transitionState) togetherWith onExit(transitionState)
+                SHRINK -> onPopEnter(transitionState) togetherWith onPopExit(transitionState)
+            }.apply {
+                targetContentZIndex = transitionState.targetContentZIndex
+            }
+        },
         label = label,
         contentAlignment = contentAlignment,
         contentKey = { it?.key },
