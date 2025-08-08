@@ -139,7 +139,7 @@ publishing {
             pom {
                 name.set("Kruiser")
                 description.set("A Kotlin Multiplatform navigation library with composable backstack-based navigation for Android, iOS, and Desktop")
-                url.set("https://github.com/gaw1ik/kruiser-kmm")
+                url.set("https://github.com/kihaki/kruiser-kmm")
                 
                 licenses {
                     license {
@@ -150,16 +150,16 @@ publishing {
                 
                 developers {
                     developer {
-                        id.set("gaw1ik")
-                        name.set("gaw1ik")
-                        email.set("gaw1ik@users.noreply.github.com")
+                        id.set("kihaki")
+                        name.set("kihaki")
+                        email.set("kihaki@gmail.com")
                     }
                 }
                 
                 scm {
-                    connection.set("scm:git:git://github.com/gaw1ik/kruiser-kmm.git")
-                    developerConnection.set("scm:git:ssh://github.com:gaw1ik/kruiser-kmm.git")
-                    url.set("https://github.com/gaw1ik/kruiser-kmm/tree/master")
+                    connection.set("scm:git:git://github.com/kihaki/kruiser-kmm.git")
+                    developerConnection.set("scm:git:ssh://github.com:kihaki/kruiser-kmm.git")
+                    url.set("https://github.com/kihaki/kruiser-kmm/tree/master")
                 }
             }
         }
