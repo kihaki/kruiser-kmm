@@ -7,6 +7,16 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    `maven-publish`
+}
+
+group = "com.github.gaw1ik"
+version = System.getenv("JITPACK_VERSION") ?: "1.0-SNAPSHOT"
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
 }
 
 kotlin {
@@ -119,6 +129,39 @@ kotlin {
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+        }
+    }
+}
+
+publishing {
+    publications {
+        withType<MavenPublication> {
+            pom {
+                name.set("Kruiser")
+                description.set("A Kotlin Multiplatform navigation library with composable backstack-based navigation for Android, iOS, and Desktop")
+                url.set("https://github.com/gaw1ik/kruiser-kmm")
+                
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://opensource.org/licenses/MIT")
+                    }
+                }
+                
+                developers {
+                    developer {
+                        id.set("gaw1ik")
+                        name.set("gaw1ik")
+                        email.set("gaw1ik@users.noreply.github.com")
+                    }
+                }
+                
+                scm {
+                    connection.set("scm:git:git://github.com/gaw1ik/kruiser-kmm.git")
+                    developerConnection.set("scm:git:ssh://github.com:gaw1ik/kruiser-kmm.git")
+                    url.set("https://github.com/gaw1ik/kruiser-kmm/tree/master")
+                }
+            }
         }
     }
 }
