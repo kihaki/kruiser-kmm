@@ -1,6 +1,10 @@
 package net.gaw.kruiser.sample
 
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,9 +41,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import net.gaw.kruiser.core.BackStackItem
+import net.gaw.kruiser.core.CustomTransitionProvider
 import net.gaw.kruiser.core.Destination
 import net.gaw.kruiser.core.pop
 import net.gaw.kruiser.core.push
+import net.gaw.kruiser.ui.BackstackTransitionState
 import net.gaw.kruiser.ui.BackstackView
 import net.gaw.kruiser.ui.LocalMutableBackstackState
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -48,7 +54,7 @@ import kotlin.uuid.Uuid
 
 data class CounterDestination(
     val count: Int,
-) : Destination {
+) : Destination, CustomTransitionProvider {
     @OptIn(ExperimentalUuidApi::class)
     @Composable
     override fun Content() {
@@ -73,6 +79,11 @@ data class CounterDestination(
                 }
             }
         }
+    }
+
+    @Composable
+    override fun provideCustomTransition(transitionState: BackstackTransitionState): ContentTransform {
+        return fadeIn() togetherWith fadeOut()
     }
 }
 

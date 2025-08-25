@@ -1,6 +1,7 @@
 package net.gaw.kruiser.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.slideInHorizontally
@@ -19,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import net.gaw.kruiser.core.BackStackItem
+import net.gaw.kruiser.core.CustomTransitionProvider
 import net.gaw.kruiser.ui.BackstackTransitionEvent.Grow
 import net.gaw.kruiser.ui.BackstackTransitionEvent.Idle
 import net.gaw.kruiser.ui.BackstackTransitionEvent.Shrink
@@ -47,15 +49,19 @@ fun BackstackView(
 
     val transitionState = produceBackstackTransitionState(items)
 
+    val customTransition = (currentBackstackItem?.destination as? CustomTransitionProvider)
+        ?.provideCustomTransition(transitionState)
+
     AnimatedContent(
         targetState = currentBackstackItem,
         transitionSpec = {
-            val transition = when(transitionState.event) {
+            val transition: ContentTransform = customTransition ?: when (transitionState.event) {
                 is Grow,
                     // Idle is treated as grow for transition purposes so that swapping the top
                     // destination for example will show a push transition to the user
                 is Idle ->
                     onEnter(transitionState) togetherWith onExit(transitionState)
+
                 is Shrink ->
                     onPopEnter(transitionState) togetherWith onPopExit(transitionState)
             }
@@ -82,7 +88,10 @@ fun BackstackView(
                         }
                     }
                 }
-                CompositionLocalProvider(LocalBackstackItem provides item) {
+                CompositionLocalProvider(
+                    LocalBackstackItem provides item,
+                    LocalAnimatedVisibilityScope provides this,
+                ) {
                     item.destination.Content()
                 }
             }
