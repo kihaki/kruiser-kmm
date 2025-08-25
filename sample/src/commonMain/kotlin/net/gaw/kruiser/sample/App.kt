@@ -1,14 +1,21 @@
 package net.gaw.kruiser.sample
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,11 +28,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import net.gaw.kruiser.core.BackStackEntry
 import net.gaw.kruiser.core.Destination
 import net.gaw.kruiser.core.pop
@@ -85,7 +95,7 @@ fun App() {
         CompositionLocalProvider(
             LocalMutableBackstackState provides appViewModel.backstack,
         ) {
-            Column(
+            Box(
                 modifier = Modifier
                     .navigationBarsPadding()
                     .statusBarsPadding()
@@ -93,13 +103,31 @@ fun App() {
             ) {
                 BackstackView(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
+                        .fillMaxSize()
                         .animateContentSize(),
                     entries = backstack,
                 )
-                backstack.reversed().forEach {
-                    Text("${it.destination::class.simpleName} - ${it.key.takeLast(5)}")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomStart)
+                        .padding(16.dp),
+                ) {
+                    backstack.forEach { entry ->
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .clickable {
+                                    appViewModel
+                                        .backstack
+                                        .update { stack ->
+                                            stack.dropLastWhile { it.key != entry.key }
+                                        }
+                                }
+                                .background(color = Color.Blue),
+                        )
+                    }
                 }
             }
         }
