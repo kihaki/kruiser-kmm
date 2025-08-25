@@ -1,10 +1,8 @@
 package net.gaw.kruiser.sample
 
-import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,49 +39,50 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import net.gaw.kruiser.core.BackStackItem
-import net.gaw.kruiser.core.CustomTransitionProvider
 import net.gaw.kruiser.core.Destination
 import net.gaw.kruiser.core.pop
 import net.gaw.kruiser.core.push
-import net.gaw.kruiser.ui.BackstackTransitionState
 import net.gaw.kruiser.ui.BackstackView
+import net.gaw.kruiser.ui.LocalAnimatedVisibilityScope
 import net.gaw.kruiser.ui.LocalMutableBackstackState
+import net.gaw.kruiser.ui.transition.DisableTransitions
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 data class CounterDestination(
     val count: Int,
-) : Destination, CustomTransitionProvider {
+) : Destination, DisableTransitions {
     @OptIn(ExperimentalUuidApi::class)
     @Composable
     override fun Content() {
-        Surface {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text("The counter is at $count")
-                Spacer(modifier = Modifier.height(8.dp))
-
-                val randomSavedHash = rememberSaveable { Uuid.random().toString().takeLast(5) }
-                Text("Hash: $randomSavedHash")
-                Spacer(modifier = Modifier.height(8.dp))
-
-                val localBackstack = LocalMutableBackstackState.current
-                Button(
-                    onClick = { localBackstack.push(BackStackItem(CounterDestination(count + 1))) },
+        with(LocalAnimatedVisibilityScope.current) {
+            Surface {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                 ) {
-                    Text("Push on the stack")
+                    Text("The counter is at $count")
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val randomSavedHash = rememberSaveable { Uuid.random().toString().takeLast(5) }
+                    Text("Hash: $randomSavedHash")
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val localBackstack = LocalMutableBackstackState.current
+                    Button(
+                        modifier = Modifier.animateEnterExit(
+                            enter = slideInVertically { it },
+                            exit = slideOutVertically { it },
+                        ),
+                        onClick = { localBackstack.push(BackStackItem(CounterDestination(count + 1))) },
+                    ) {
+                        Text("Push on the stack")
+                    }
                 }
             }
         }
-    }
-
-    @Composable
-    override fun provideCustomTransition(transitionState: BackstackTransitionState): ContentTransform {
-        return fadeIn() togetherWith fadeOut()
     }
 }
 
