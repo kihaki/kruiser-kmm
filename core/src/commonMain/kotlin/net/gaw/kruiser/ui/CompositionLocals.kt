@@ -2,10 +2,10 @@ package net.gaw.kruiser.ui
 
 import androidx.compose.runtime.compositionLocalOf
 import kotlinx.coroutines.flow.MutableStateFlow
-import net.gaw.kruiser.core.BackStackEntry
+import net.gaw.kruiser.core.BackStackItem
 
-val LocalBackstackEntry =
-    compositionLocalOf<BackStackEntry> { error("No LocalBackstackEntry provided.") }
+val LocalBackstackItem =
+    compositionLocalOf<BackStackItem> { error("No LocalBackstackEntry provided.") }
 
 val LocalMutableBackstackState =
-    compositionLocalOf<MutableStateFlow<List<BackStackEntry>>> { error("No LocalMutableBackstackState provided.") }
+    compositionLocalOf<MutableStateFlow<List<BackStackItem>>> { error("No LocalMutableBackstackState provided.") }

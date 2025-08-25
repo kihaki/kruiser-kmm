@@ -18,22 +18,10 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import net.gaw.kruiser.core.BackStackEntry
-import net.gaw.kruiser.ui.BackstackEvent.GROW
-import net.gaw.kruiser.ui.BackstackEvent.IDLE
-import net.gaw.kruiser.ui.BackstackEvent.SHRINK
-
-/**
- * The latest change to the backstack which can be used to apply different animations.
- */
-enum class BackstackEvent {
-    GROW, SHRINK, IDLE;
-}
-
-data class BackstackTransitionState(
-    val event: BackstackEvent,
-    val targetContentZIndex: Float,
-)
+import net.gaw.kruiser.core.BackStackItem
+import net.gaw.kruiser.ui.BackstackTransitionEvent.Grow
+import net.gaw.kruiser.ui.BackstackTransitionEvent.Idle
+import net.gaw.kruiser.ui.BackstackTransitionEvent.Shrink
 
 /**
  * A composable that shows the topmost backstack item animated.
@@ -41,7 +29,7 @@ data class BackstackTransitionState(
  */
 @Composable
 fun BackstackView(
-    entries: List<BackStackEntry>,
+    items: List<BackStackItem>,
     onEnter: (transitionState: BackstackTransitionState) -> EnterTransition =
         { slideInHorizontally { it } },
     onExit: (transitionState: BackstackTransitionState) -> ExitTransition =
@@ -55,32 +43,24 @@ fun BackstackView(
     modifier: Modifier = Modifier,
 ) {
     val saveableStateHolder: SaveableStateHolder = rememberSaveableStateHolder()
-    val currentBackstackEntry = entries.lastOrNull()
+    val currentBackstackItem = items.lastOrNull()
 
-    var previousBackstackSize by remember { mutableStateOf(entries.size) }
-    val sizeDiff = entries.size - previousBackstackSize
-
-    val event = when {
-        sizeDiff > 0 -> GROW
-        sizeDiff < 0 -> SHRINK
-        else -> IDLE
-    }
-
-    val transitionState = BackstackTransitionState(
-        event = event,
-        targetContentZIndex = entries.size.toFloat(),
-    )
-
-    previousBackstackSize = entries.size
+    val transitionState = produceBackstackTransitionState(items)
 
     AnimatedContent(
-        targetState = currentBackstackEntry,
+        targetState = currentBackstackItem,
         transitionSpec = {
-            when (transitionState.event) {
-                IDLE,
-                GROW -> onEnter(transitionState) togetherWith onExit(transitionState)
-                SHRINK -> onPopEnter(transitionState) togetherWith onPopExit(transitionState)
-            }.apply {
+            val transition = when(transitionState.event) {
+                is Grow,
+                    // Idle is treated as grow for transition purposes so that swapping the top
+                    // destination for example will show a push transition to the user
+                is Idle ->
+                    onEnter(transitionState) togetherWith onExit(transitionState)
+                is Shrink ->
+                    onPopEnter(transitionState) togetherWith onPopExit(transitionState)
+            }
+
+            transition.apply {
                 targetContentZIndex = transitionState.targetContentZIndex
             }
         },
@@ -88,26 +68,84 @@ fun BackstackView(
         contentAlignment = contentAlignment,
         contentKey = { it?.key },
         modifier = modifier,
-    ) { entry ->
-        if (entry != null) {
-            val key = remember(entry) { entry.key }
+    ) { item ->
+        if (item != null) {
+            val key = remember(item) { item.key }
             saveableStateHolder.SaveableStateProvider(key) {
                 DisposableEffect(key) {
                     onDispose {
-                        // Remove saved state for this backstack entry if it is no longer
+                        // Remove saved state for this backstack item if it is no longer
                         // on the backstack, using onDispose will trigger this event when the
-                        // entry leaves the composition (e.g. tied to UI transitions).
-                        if (!entries.contains(entry)) {
+                        // item leaves the composition (e.g. tied to UI transitions).
+                        if (!items.contains(item)) {
                             saveableStateHolder.removeState(key)
                         }
                     }
                 }
-                CompositionLocalProvider(LocalBackstackEntry provides entry) {
-                    entry.destination.Content()
+                CompositionLocalProvider(LocalBackstackItem provides item) {
+                    item.destination.Content()
                 }
             }
         } else {
             Spacer(modifier = modifier)
         }
     }
+}
+
+data class BackstackTransitionState(
+    val event: BackstackTransitionEvent,
+    val targetContentZIndex: Float,
+)
+
+/**
+ * The latest change to the backstack which can be used to apply different animations.
+ */
+sealed interface BackstackTransitionEvent {
+    data class Idle(val size: Int) : BackstackTransitionEvent
+
+    sealed interface BackstackSizeChange : BackstackTransitionEvent {
+        val fromSize: Int
+        val toSize: Int
+    }
+
+    data class Grow(
+        override val fromSize: Int,
+        override val toSize: Int,
+    ) : BackstackSizeChange
+
+    data class Shrink(
+        override val fromSize: Int,
+        override val toSize: Int,
+    ) : BackstackSizeChange
+}
+
+@Composable
+private fun produceBackstackTransitionState(
+    items: List<BackStackItem>,
+): BackstackTransitionState {
+    var previousBackstackSize by remember { mutableStateOf(items.size) }
+    val addedItemsCount = items.size - previousBackstackSize
+
+    val event = when {
+        addedItemsCount > 0 -> Grow(
+            fromSize = previousBackstackSize,
+            toSize = items.size,
+        )
+
+        addedItemsCount < 0 -> Shrink(
+            fromSize = previousBackstackSize,
+            toSize = items.size,
+        )
+
+        else -> Idle(size = items.size)
+    }
+
+    val transitionState = BackstackTransitionState(
+        event = event,
+        targetContentZIndex = items.size.toFloat(),
+    )
+
+    previousBackstackSize = items.size
+
+    return transitionState
 }

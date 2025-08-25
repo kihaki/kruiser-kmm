@@ -36,7 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
-import net.gaw.kruiser.core.BackStackEntry
+import net.gaw.kruiser.core.BackStackItem
 import net.gaw.kruiser.core.Destination
 import net.gaw.kruiser.core.pop
 import net.gaw.kruiser.core.push
@@ -67,7 +67,7 @@ data class CounterDestination(
 
                 val localBackstack = LocalMutableBackstackState.current
                 Button(
-                    onClick = { localBackstack.push(BackStackEntry(CounterDestination(count + 1))) },
+                    onClick = { localBackstack.push(BackStackItem(CounterDestination(count + 1))) },
                 ) {
                     Text("Push on the stack")
                 }
@@ -79,7 +79,7 @@ data class CounterDestination(
 class AppViewModel : ViewModel() {
     val backstack = MutableStateFlow(
         listOf(
-            BackStackEntry(CounterDestination(1)),
+            BackStackItem(CounterDestination(1)),
         )
     )
 }
@@ -105,7 +105,7 @@ fun App() {
                     modifier = Modifier
                         .fillMaxSize()
                         .animateContentSize(),
-                    entries = backstack,
+                    items = backstack,
                 )
                 Row(
                     modifier = Modifier

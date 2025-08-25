@@ -18,10 +18,10 @@ import kotlin.uuid.Uuid
  */
 @Immutable
 @Serializable
-data class BackStackEntry(
+data class BackStackItem(
     val destination: Destination,
-    val key: String = generateBackstackEntryKey(),
+    val key: String = generateBackstackItemKey(),
 )
 
 @OptIn(ExperimentalUuidApi::class)
-fun generateBackstackEntryKey() = Uuid.random().toString()
+fun generateBackstackItemKey() = Uuid.random().toString()
